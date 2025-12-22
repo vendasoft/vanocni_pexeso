@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Vánoční pexeso</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
@@ -15,6 +15,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: manipulation;
         }
 
         .game-container {
@@ -56,7 +59,7 @@
         }
 
         .game-info {
-            display: flex;
+            display: none;
             justify-content: center;
             gap: 40px;
             align-items: center;
@@ -64,7 +67,10 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
-            display: none;
+        }
+
+        .game-info.active {
+            display: flex;
         }
 
         .timer, .moves, .matches {
@@ -91,6 +97,9 @@
             position: relative;
             cursor: pointer;
             perspective: 1000px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
 
         .card-inner {
@@ -332,34 +341,254 @@
             }
         }
 
-        @media (max-width: 768px) {
+        /* Mobile-first responsive design */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .game-container {
+                max-width: 100%;
+                padding: 0 5px;
+            }
+
+            h1 {
+                font-size: 22px;
+                margin-bottom: 20px;
+                line-height: 1.3;
+            }
+            
+            .laravel-badge {
+                display: block;
+                margin: 5px auto 0;
+                width: fit-content;
+            }
+
+            .game-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+                padding: 10px;
+                margin: 15px 0;
+            }
+
             .memory-card {
-                width: 80px;
-                height: 80px;
+                width: calc(100vw / 4 - 20px);
+                height: calc(100vw / 4 - 20px);
+                max-width: 70px;
+                max-height: 70px;
+                min-width: 60px;
+                min-height: 60px;
+            }
+
+            .card-front {
+                font-size: 18px;
+            }
+
+            .welcome-screen {
+                padding: 25px 20px;
+                margin: 15px 0;
+            }
+
+            .welcome-title {
+                font-size: 20px;
+                margin-bottom: 15px;
+                line-height: 1.4;
+            }
+
+            .welcome-description {
+                font-size: 16px;
+                margin-bottom: 25px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 16px;
+                margin: 8px;
+                width: calc(100% - 16px);
+                max-width: 300px;
             }
 
             .game-info {
                 flex-direction: column;
-                gap: 15px;
+                gap: 12px;
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+
+            .timer, .moves, .matches {
+                font-size: 16px;
             }
 
             .modal-content {
-                padding: 20px;
-                margin: 10px;
+                padding: 20px 15px;
+                margin: 5px;
+                max-width: 95vw;
             }
 
             .celebration-title {
-                font-size: 24px;
+                font-size: 20px;
+                margin-bottom: 15px;
             }
 
             .reconstructed-image {
-                max-width: 300px;
-                max-height: 250px;
+                max-width: 90vw;
+                max-height: 60vh;
+                margin: 15px 0;
+            }
+
+            .celebration-stats {
+                padding: 15px;
+                font-size: 14px;
+                margin: 15px 0;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .game-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+                padding: 15px;
+            }
+
+            .memory-card {
+                width: calc(100vw / 5 - 25px);
+                height: calc(100vw / 5 - 25px);
+                max-width: 85px;
+                max-height: 85px;
+                min-width: 70px;
+                min-height: 70px;
+            }
+
+            .card-front {
+                font-size: 20px;
+            }
+
+            .game-info {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 15px;
+                justify-content: space-around;
+            }
+
+            .welcome-title {
+                font-size: 24px;
+            }
+
+            .modal-content {
+                padding: 25px;
+                margin: 15px;
+            }
+
+            .celebration-title {
+                font-size: 26px;
+            }
+
+            .reconstructed-image {
+                max-width: 400px;
+                max-height: 320px;
+            }
+
+            .btn {
+                padding: 14px 25px;
+                font-size: 17px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .game-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 10px;
+            }
+
+            .memory-card {
+                width: 90px;
+                height: 90px;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .memory-card {
+                transform: scale(1);
+                transition: transform 0.1s ease;
+            }
+
+            .memory-card:active {
+                transform: scale(0.95);
+            }
+
+            .btn:active {
+                transform: translateY(1px) scale(0.98);
+            }
+
+            .close-modal {
+                width: 40px;
+                height: 40px;
+                font-size: 28px;
+            }
+        }
+
+        /* Landscape orientation on mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            body {
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 18px;
+                margin-bottom: 10px;
             }
 
             .game-grid {
-                gap: 8px;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 4px;
+                padding: 8px;
+                margin: 10px 0;
+            }
+
+            .memory-card {
+                width: calc(100vw / 6 - 15px);
+                height: calc(100vw / 6 - 15px);
+                max-width: 60px;
+                max-height: 60px;
+                min-width: 45px;
+                min-height: 45px;
+            }
+
+            .card-front {
+                font-size: 14px;
+            }
+
+            .game-info {
+                flex-direction: row;
+                gap: 10px;
+                padding: 8px;
+                margin-bottom: 10px;
+            }
+
+            .timer, .moves, .matches {
+                font-size: 14px;
+            }
+
+            .welcome-screen {
+                padding: 20px 15px;
+                margin: 10px 0;
+            }
+
+            .welcome-title {
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+
+            .modal-content {
                 padding: 15px;
+                max-height: 85vh;
+                overflow-y: auto;
+            }
+
+            .reconstructed-image {
+                max-width: 70vw;
+                max-height: 50vh;
             }
         }
     </style>
@@ -398,9 +627,7 @@
     <script>
         class PexesoGame {
             constructor() {
-                this.gridCols = 6;
-                this.gridRows = 6;
-                this.totalPairs = 18;
+                this.setGridSizeForDevice();
                 this.cards = [];
                 this.flippedCards = [];
                 this.matchedPairs = 0;
@@ -413,6 +640,64 @@
 
                 this.initEventListeners();
                 this.loadImage();
+                this.handleResize();
+            }
+
+            setGridSizeForDevice() {
+                const width = window.innerWidth;
+                const isLandscape = window.innerWidth > window.innerHeight;
+                
+                if (width <= 480) {
+                    // Small mobile devices
+                    if (isLandscape) {
+                        this.gridCols = 6;
+                        this.gridRows = 6;
+                        this.totalPairs = 18;
+                    } else {
+                        this.gridCols = 4;
+                        this.gridRows = 9;
+                        this.totalPairs = 18;
+                    }
+                } else if (width <= 768) {
+                    // Tablets and large phones
+                    this.gridCols = 5;
+                    this.gridRows = Math.ceil(36 / 5);
+                    this.totalPairs = 18;
+                } else {
+                    // Desktop and large screens
+                    this.gridCols = 6;
+                    this.gridRows = 6;
+                    this.totalPairs = 18;
+                }
+                
+                // Update UI
+                const totalPairsSpan = document.getElementById('totalPairs');
+                if (totalPairsSpan) {
+                    totalPairsSpan.textContent = this.totalPairs;
+                }
+            }
+
+            handleResize() {
+                window.addEventListener('resize', () => {
+                    const wasGameActive = this.gameActive;
+                    this.setGridSizeForDevice();
+                    
+                    if (wasGameActive) {
+                        // If game was in progress, recreate the grid with new dimensions
+                        setTimeout(() => {
+                            this.renderCards();
+                        }, 100);
+                    }
+                });
+
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        this.setGridSizeForDevice();
+                        if (this.gameActive) {
+                            this.renderCards();
+                        }
+                    }, 300);
+                });
             }
 
             initEventListeners() {
@@ -451,7 +736,7 @@
                 }
 
                 document.getElementById('welcomeScreen').style.display = 'none';
-                document.getElementById('gameInfo').style.display = 'flex';
+                document.getElementById('gameInfo').classList.add('active');
                 document.getElementById('celebrationModal').classList.remove('show');
 
                 this.initializeGame();
@@ -546,11 +831,19 @@
             handleCardClick(e) {
                 if (!this.gameActive || !this.canFlip) return;
 
+                // Prevent double-tap zoom on mobile
+                e.preventDefault();
+
                 const cardElement = e.currentTarget;
                 const cardIndex = parseInt(cardElement.dataset.index);
 
                 if (cardElement.classList.contains('flipped') || cardElement.classList.contains('matched')) {
                     return;
+                }
+
+                // Add tactile feedback for touch devices
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(50);
                 }
 
                 this.flipCard(cardElement, cardIndex);
