@@ -678,16 +678,34 @@
             }
 
             handleResize() {
+                let resizeTimeout;
+                let lastWidth = window.innerWidth;
+                let lastHeight = window.innerHeight;
+                
                 window.addEventListener('resize', () => {
-                    const wasGameActive = this.gameActive;
-                    this.setGridSizeForDevice();
-                    
-                    if (wasGameActive) {
-                        // If game was in progress, recreate the grid with new dimensions
-                        setTimeout(() => {
-                            this.renderCards();
-                        }, 100);
-                    }
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        const currentWidth = window.innerWidth;
+                        const currentHeight = window.innerHeight;
+                        
+                        // Only recreate grid if there's a significant size change or orientation change
+                        // This prevents Safari address bar scroll from restarting the game
+                        const widthChange = Math.abs(currentWidth - lastWidth);
+                        const heightChange = Math.abs(currentHeight - lastHeight);
+                        const significantChange = widthChange > 100 || heightChange > 100;
+                        
+                        if (significantChange && this.gameActive) {
+                            const wasGameActive = this.gameActive;
+                            this.setGridSizeForDevice();
+                            
+                            if (wasGameActive) {
+                                this.renderCards();
+                            }
+                        }
+                        
+                        lastWidth = currentWidth;
+                        lastHeight = currentHeight;
+                    }, 250);
                 });
 
                 window.addEventListener('orientationchange', () => {
@@ -696,6 +714,8 @@
                         if (this.gameActive) {
                             this.renderCards();
                         }
+                        lastWidth = window.innerWidth;
+                        lastHeight = window.innerHeight;
                     }, 300);
                 });
             }
