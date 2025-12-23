@@ -155,7 +155,7 @@
             box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
         }
 
-        .celebration-modal {
+        .auth-modal, .celebration-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -169,8 +169,53 @@
             animation: fadeIn 0.5s ease-in-out;
         }
 
-        .celebration-modal.show {
+        .auth-modal.show, .celebration-modal.show {
             display: flex;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .auth-question {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .auth-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .auth-error {
+            color: #ff4444;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
         }
 
         .modal-content {
@@ -346,7 +391,7 @@
             body {
                 padding: 10px;
             }
-            
+
             .game-container {
                 max-width: 100%;
                 padding: 0 5px;
@@ -357,7 +402,7 @@
                 margin-bottom: 20px;
                 line-height: 1.3;
             }
-            
+
             .laravel-badge {
                 display: block;
                 margin: 5px auto 0;
@@ -526,6 +571,21 @@
                 height: 40px;
                 font-size: 28px;
             }
+
+            .auth-title {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+
+            .auth-question {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            .auth-input {
+                font-size: 16px;
+                padding: 12px;
+            }
         }
 
         /* Landscape orientation on mobile */
@@ -612,6 +672,18 @@
         <div class="game-grid" id="gameGrid"></div>
     </div>
 
+    <!-- Authentication Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="modal-content">
+            <div class="auth-title">🔐 Přístup do hry</div>
+            <p style="font-size: 18px; color: #666; margin-bottom: 20px;">Pro přístup ke hře odpověz na otázku:</p>
+            <div class="auth-question">Kolik gramů vážila Elenka, když se narodila?</div>
+            <input type="number" id="authInput" placeholder="Zadej počet gramů..." class="auth-input">
+            <div class="auth-error" id="authError">Nesprávná odpověď. Zkus to znovu!</div>
+            <button class="btn" id="authSubmit">Ověřit</button>
+        </div>
+    </div>
+
     <!-- Celebration Modal -->
     <div class="celebration-modal" id="celebrationModal">
         <div class="fireworks" id="fireworks"></div>
@@ -637,16 +709,18 @@
                 this.gameActive = false;
                 this.image = null;
                 this.canFlip = true;
+                this.authenticated = false;
 
                 this.initEventListeners();
                 this.loadImage();
                 this.handleResize();
+                this.showAuthModal();
             }
 
             setGridSizeForDevice() {
                 const width = window.innerWidth;
                 const isLandscape = window.innerWidth > window.innerHeight;
-                
+
                 if (width <= 480) {
                     // Small mobile devices
                     if (isLandscape) {
@@ -669,7 +743,7 @@
                     this.gridRows = 6;
                     this.totalPairs = 18;
                 }
-                
+
                 // Update UI
                 const totalPairsSpan = document.getElementById('totalPairs');
                 if (totalPairsSpan) {
@@ -681,28 +755,28 @@
                 let resizeTimeout;
                 let lastWidth = window.innerWidth;
                 let lastHeight = window.innerHeight;
-                
+
                 window.addEventListener('resize', () => {
                     clearTimeout(resizeTimeout);
                     resizeTimeout = setTimeout(() => {
                         const currentWidth = window.innerWidth;
                         const currentHeight = window.innerHeight;
-                        
+
                         // Only recreate grid if there's a significant size change or orientation change
                         // This prevents Safari address bar scroll from restarting the game
                         const widthChange = Math.abs(currentWidth - lastWidth);
                         const heightChange = Math.abs(currentHeight - lastHeight);
                         const significantChange = widthChange > 100 || heightChange > 100;
-                        
+
                         if (significantChange && this.gameActive) {
                             const wasGameActive = this.gameActive;
                             this.setGridSizeForDevice();
-                            
+
                             if (wasGameActive) {
                                 this.renderCards();
                             }
                         }
-                        
+
                         lastWidth = currentWidth;
                         lastHeight = currentHeight;
                     }, 250);
@@ -728,6 +802,14 @@
                     document.getElementById('celebrationModal').classList.remove('show');
                     this.clearEffects();
                 };
+
+                // Authentication event listeners
+                document.getElementById('authSubmit').addEventListener('click', this.checkAuthentication.bind(this));
+                document.getElementById('authInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.checkAuthentication();
+                    }
+                });
             }
 
             loadImage() {
@@ -749,7 +831,37 @@
                 img.src = '{{ asset("storage/game-image.png") }}';
             }
 
+            showAuthModal() {
+                if (!this.authenticated) {
+                    document.getElementById('authModal').classList.add('show');
+                    document.getElementById('welcomeScreen').style.display = 'none';
+                    document.getElementById('gameInfo').classList.remove('active');
+                }
+            }
+
+            checkAuthentication() {
+                const input = document.getElementById('authInput');
+                const errorDiv = document.getElementById('authError');
+                const answer = parseInt(input.value);
+
+                if (answer === 3050) {
+                    this.authenticated = true;
+                    document.getElementById('authModal').classList.remove('show');
+                    document.getElementById('welcomeScreen').style.display = 'block';
+                    errorDiv.classList.remove('show');
+                } else {
+                    errorDiv.classList.add('show');
+                    input.value = '';
+                    input.focus();
+                }
+            }
+
             startNewGame() {
+                if (!this.authenticated) {
+                    this.showAuthModal();
+                    return;
+                }
+
                 if (!this.image) {
                     alert('Image is still loading. Please wait a moment and try again.');
                     return;
